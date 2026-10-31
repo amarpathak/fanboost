@@ -20,14 +20,16 @@ final class App: NSObject, NSApplicationDelegate {
     var boosting = false
     var lastError: String?
 
-    // Smart, Medium and High go to max at/above `hot` and drop back below `cool`,
-    // so a fixed speed can never cool less than the Mac needs.
-    let hot = 65.0, cool = 58.0
+    // Smart, Medium and High go to max once the CPU has stayed at/above `hot` for
+    // `holdSeconds`, and drop back below `cool`, so a fixed speed can never cool
+    // less than the Mac needs. The hold ignores brief spikes like an app launching.
+    let hot = 65.0, cool = 58.0, holdSeconds = 3.0
+    var hotSince: Date?
 
     func applicationDidFinishLaunching(_ n: Notification) {
         apply(mode)
         tick()
-        Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in self?.tick() }
+        Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in self?.tick() }
     }
 
     func applicationWillTerminate(_ n: Notification) {
@@ -82,8 +84,10 @@ final class App: NSObject, NSApplicationDelegate {
         if mode == .smart || mode == .medium || mode == .high {
             // Unknown temperature is treated as hot: fail toward more cooling.
             let t = s.temp ?? .infinity
-            if !boosting && t >= hot { apply(.max); boosting = true }
-            else if boosting && t < cool { apply(mode) }
+            hotSince = t >= hot ? (hotSince ?? Date()) : nil
+            if !boosting, let since = hotSince, Date().timeIntervalSince(since) >= holdSeconds {
+                apply(.max); boosting = true
+            } else if boosting && t < cool { apply(mode) }
         }
         let temp = s.temp.map { String(format: "%.0f°", $0) } ?? "--"
         let rpm = s.rpms.max().map { "\($0)" } ?? "--"
@@ -99,7 +103,7 @@ final class App: NSObject, NSApplicationDelegate {
         if let e = lastError { menu.addItem(withTitle: "⚠️ \(e)", action: nil, keyEquivalent: "") }
         menu.addItem(.separator())
         let options: [(Mode, String)] = [
-            (.smart, "Smart — max fans at \(Int(hot))°C, release at \(Int(cool))°C"),
+            (.smart, "Smart — max fans after \(Int(holdSeconds))s at \(Int(hot))°C, release at \(Int(cool))°C"),
             (.auto, "Auto (macOS default)"),
             (.medium, "Medium (50%, max when hot)"),
             (.high, "High (75%, max when hot)"),

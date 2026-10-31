@@ -13,9 +13,9 @@ The menu bar shows CPU temperature and fan speed: `🌀 58° 1840` (🌪 while b
 
 | Mode | What it does |
 |---|---|
-| **Smart** (default) | macOS controls the fans until the CPU hits **65°C**, then max fans until it drops below **58°C** |
+| **Smart** (default) | macOS controls the fans until the CPU stays at **65°C or above for 3 seconds**, then max fans until it drops below **58°C** |
 | Auto | Plain macOS behaviour |
-| Medium / High | Fixed 50% / 75% fan speed, but still goes to max at 65°C |
+| Medium / High | Fixed 50% / 75% fan speed, but still goes to max under the same rule |
 | Max | Fans at full speed |
 
 Quitting FanBoost always hands the fans back to macOS. A reboot also resets them.
