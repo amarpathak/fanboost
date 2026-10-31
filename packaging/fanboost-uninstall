@@ -1,0 +1,22 @@
+#!/bin/sh
+# Removes FanBoost completely. Run: sudo fanboost-uninstall
+set -e
+[ "$(id -u)" = 0 ] || { echo "run: sudo $0"; exit 1; }
+LABEL=io.github.amarpathak.fanboost
+USER_NAME="${SUDO_USER:-$(stat -f%Su /dev/console)}"
+UID_NUM="$(id -u "$USER_NAME" 2>/dev/null || true)"
+if [ -n "$UID_NUM" ]; then
+    launchctl bootout "gui/$UID_NUM" "/Library/LaunchAgents/$LABEL.plist" 2>/dev/null || true
+    launchctl bootout "gui/$UID_NUM" "/Users/$USER_NAME/Library/LaunchAgents/local.fanboost.plist" 2>/dev/null || true
+    rm -f "/Users/$USER_NAME/Library/LaunchAgents/local.fanboost.plist"
+fi
+pkill -x FanBoost || true
+if [ -x /usr/local/bin/fanctl ]; then
+    /usr/local/bin/fanctl auto || true
+    /usr/local/bin/fanctl limit 100 2>/dev/null || true
+    /usr/local/bin/fanctl charging on 2>/dev/null || true
+fi
+rm -f /usr/local/bin/fanctl /usr/local/bin/fanboost-uninstall /etc/sudoers.d/fanboost "/Library/LaunchAgents/$LABEL.plist"
+rm -rf /Applications/FanBoost.app
+pkgutil --forget "$LABEL" >/dev/null 2>&1 || true
+echo "FanBoost uninstalled."

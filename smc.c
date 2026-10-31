@@ -6,6 +6,7 @@
 #define KERNEL_INDEX_SMC 2
 #define SMC_CMD_READ_BYTES 5
 #define SMC_CMD_WRITE_BYTES 6
+#define SMC_CMD_READ_INDEX 8
 #define SMC_CMD_READ_KEYINFO 9
 
 typedef struct { unsigned char major, minor, build, reserved; unsigned short release; } SMCVers;
@@ -50,6 +51,15 @@ static int key_info(const char *key, SMCKeyInfo *info) {
     in.data8 = SMC_CMD_READ_KEYINFO;
     if (smc_call(&in, &out)) return -1;
     *info = out.keyInfo;
+    return 0;
+}
+
+int smc_key_at(unsigned int index, char key[5]) {
+    SMCParam in = {0}, out = {0};
+    in.data8 = SMC_CMD_READ_INDEX;
+    in.data32 = index;
+    if (smc_call(&in, &out)) return -1;
+    key[0] = out.key >> 24; key[1] = out.key >> 16; key[2] = out.key >> 8; key[3] = out.key; key[4] = 0;
     return 0;
 }
 

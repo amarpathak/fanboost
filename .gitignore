@@ -1,3 +1,5 @@
 fanctl
 FanBoost.app/
 .DS_Store
+build/
+dist/

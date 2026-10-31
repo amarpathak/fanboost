@@ -1,0 +1,54 @@
+#!/bin/sh
+# Runs as root after FanBoost.app and fanctl are in place. Lets the logged-in user run
+# fanctl as root without a password, and starts FanBoost at login.
+LABEL=io.github.amarpathak.fanboost
+AGENT="/Library/LaunchAgents/$LABEL.plist"
+USER_NAME="${FANBOOST_USER:-$(stat -f%Su /dev/console)}"
+
+# When /Applications already holds a FanBoost.app with a different bundle id (pre-1.0
+# source installs used local.fanboost), Installer won't replace it and puts the new app
+# in FanBoost.localized instead. Move it into place.
+NEW=/Applications/FanBoost.localized/FanBoost.app
+if [ -d "$NEW" ]; then
+    rm -rf /Applications/FanBoost.app
+    mv "$NEW" /Applications/FanBoost.app
+    rmdir /Applications/FanBoost.localized 2>/dev/null
+fi
+
+if [ -n "$USER_NAME" ] && [ "$USER_NAME" != root ]; then
+    WHO="$USER_NAME"
+else
+    WHO="%admin"
+fi
+TMP="$(mktemp)"
+echo "$WHO ALL=(root) NOPASSWD: /usr/local/bin/fanctl" > "$TMP"
+if visudo -cf "$TMP" >/dev/null; then
+    install -o root -g wheel -m 440 "$TMP" /etc/sudoers.d/fanboost
+fi
+rm -f "$TMP"
+
+cat > "$AGENT" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>$LABEL</string>
+  <key>ProgramArguments</key><array><string>/Applications/FanBoost.app/Contents/MacOS/FanBoost</string></array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><false/>
+  <key>ProcessType</key><string>Interactive</string>
+</dict></plist>
+PLIST
+chown root:wheel "$AGENT"
+chmod 644 "$AGENT"
+
+# Start it now for the logged-in user (it starts by itself at every later login).
+if [ "$WHO" = "$USER_NAME" ]; then
+    UID_NUM="$(id -u "$USER_NAME")"
+    # Remove the agent used by pre-1.0 source installs.
+    OLD="/Users/$USER_NAME/Library/LaunchAgents/local.fanboost.plist"
+    launchctl bootout "gui/$UID_NUM" "$OLD" 2>/dev/null
+    rm -f "$OLD"
+    launchctl bootout "gui/$UID_NUM" "$AGENT" 2>/dev/null
+    launchctl bootstrap "gui/$UID_NUM" "$AGENT"
+fi
+exit 0

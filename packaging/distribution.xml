@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="2">
+    <title>FanBoost</title>
+    <welcome file="welcome.html" mime-type="text/html"/>
+    <license file="LICENSE.txt"/>
+    <options customize="never" require-scripts="true" hostArchitectures="x86_64,arm64"/>
+    <domains enable_localSystem="true"/>
+    <choices-outline>
+        <line choice="fanboost"/>
+    </choices-outline>
+    <choice id="fanboost" visible="false">
+        <pkg-ref id="io.github.amarpathak.fanboost"/>
+    </choice>
+    <pkg-ref id="io.github.amarpathak.fanboost" version="VERSION" onConclusion="none">fanboost-component.pkg</pkg-ref>
+</installer-gui-script>

@@ -1,0 +1,5 @@
+#!/bin/sh
+# Stop a running FanBoost before files are replaced, and give the fans back to macOS.
+pkill -x FanBoost 2>/dev/null
+[ -x /usr/local/bin/fanctl ] && /usr/local/bin/fanctl auto 2>/dev/null
+exit 0

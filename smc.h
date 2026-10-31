@@ -9,6 +9,8 @@ typedef struct {
 
 int smc_open(void);
 void smc_close(void);
+// Name of the index-th SMC key (for enumerating sensors).
+int smc_key_at(unsigned int index, char key[5]);
 int smc_read(const char *key, SMCVal *val);
 int smc_write(const char *key, const unsigned char *bytes, unsigned int size);
 // Decode a numeric SMC value (fpe2, flt, sp78, ui8/16/32). Returns -1 on unknown type.
