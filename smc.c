@@ -45,12 +45,25 @@ static int smc_call(SMCParam *in, SMCParam *out) {
     return out->result == 0 ? 0 : -2;
 }
 
+// Key info (size and type) never changes, so it's cached: a long-running reader then
+// needs one SMC call per read instead of two.
+#define INFO_CACHE_SIZE 128
+static struct { unsigned int key; SMCKeyInfo info; } info_cache[INFO_CACHE_SIZE];
+static int info_cache_count;
+
 static int key_info(const char *key, SMCKeyInfo *info) {
+    unsigned int k = key_to_int(key);
+    for (int i = 0; i < info_cache_count; i++)
+        if (info_cache[i].key == k) { *info = info_cache[i].info; return 0; }
     SMCParam in = {0}, out = {0};
-    in.key = key_to_int(key);
+    in.key = k;
     in.data8 = SMC_CMD_READ_KEYINFO;
     if (smc_call(&in, &out)) return -1;
     *info = out.keyInfo;
+    if (info_cache_count < INFO_CACHE_SIZE) {
+        info_cache[info_cache_count].key = k;
+        info_cache[info_cache_count++].info = out.keyInfo;
+    }
     return 0;
 }
 
