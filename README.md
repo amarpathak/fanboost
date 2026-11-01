@@ -114,6 +114,12 @@ fan speeds (`F<n>Ac/Mn/Mx`) and battery state. The app links that C code directl
 `fanctl` (run via `sudo`) does the writes: `F<n>Md` (manual mode), `F<n>Tg` (target RPM),
 `BCLM` (charge limit). The app is AppKit + SwiftUI/Swift Charts, built as universal binaries.
 
+## Sibling project
+
+[SpaceSense](https://github.com/amarpathak/spacesense): a free, open-source Mac app that
+explains what is filling your disk (node_modules, package caches, Docker, Xcode, AI
+models, app data) and cleans only what you choose. [Website & guides](https://amarpathak.github.io/spacesense/).
+
 ## Disclaimer
 
 This software overrides your Mac's fan control. It only ever *raises* fan speed on its own,
